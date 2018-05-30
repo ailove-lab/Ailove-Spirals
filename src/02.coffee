@@ -141,16 +141,16 @@ init = ->
             switch true
                 when 0<i<90
                     spin = -1
-                    v = [0, 1]
+                    v = [0, -1]
                 when 90<=i<180
                     spin = 1
-                    v = [0,-1]
+                    v = [0,1]
                 when 180<i<270
                     spin = -1
-                    v = [0,-1]
+                    v = [0,1]
                 when 270<i<360
                     spin = 1
-                    v = [0, 1]
+                    v = [0, -1]
             p1 = [mc[i  ][0], mc[i  ][1]]
             p2 = [mc[i+1][0], mc[i+1][1]]
             n = p2n dif p2, p1
