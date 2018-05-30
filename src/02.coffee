@@ -178,4 +178,5 @@ init = ->
         f.add(b, "w_r_#{i}", -10, 10).onChange redraw
     for i in [0...b.w_n]
         f.add(b, "w_p_#{i}", 0, 20, 1).onChange redraw
+        
 window.onload = init
