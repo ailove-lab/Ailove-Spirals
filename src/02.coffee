@@ -55,7 +55,7 @@ class Butterfly
 
     constructor:->
         s = sin; c=cos
-
+        @wings_details = 1
         @w_n = 6
         @w_c = 8
         @["w_r_#{i}"] = r for r, i in [-1,+2,+2,-1,+3,-2]
@@ -71,7 +71,7 @@ class Butterfly
         f
 
     build: =>
-        @main_contour = for g in [90..450]
+        @main_contour = for g in [90..450] by @wings_details
             a = g2a g
             r = @wings_formula a
             add [cx, cy], p2c [a, 40*r]
@@ -128,42 +128,74 @@ init = ->
     b = new Butterfly
     s = new Spiral 200, 200, 5.0
     s.spiral_step = 30
+    s.Spirals = true
+    s.Voronoi = false
+    s.Delaunay = false
+
+        
     redraw= ->
          
         ctx.clearRect 0, 0, w, h
 
         b.build()
         b.draw()
-        
+
         mc = b.main_contour
-        for i in [30..330] by s.spiral_step
-            continue if i%180 is 0
-            switch true
-                when 0<i<90
-                    spin = -1
-                    v = [0, -1]
-                when 90<=i<180
-                    spin = 1
-                    v = [0,1]
-                when 180<i<270
-                    spin = -1
-                    v = [0,1]
-                when 270<i<360
-                    spin = 1
-                    v = [0, -1]
-            p1 = [mc[i  ][0], mc[i  ][1]]
-            p2 = [mc[i+1][0], mc[i+1][1]]
-            n = p2n dif p2, p1
-            n = [n[1],-n[0]]
-            t = add p1, mul n, 100
-            line t, p1
-            s.draw [cx, cy], v, t, spin
-    
+        if s.Spirals
+            for i in [30..330] by s.spiral_step
+                continue if i%180 is 0
+                switch true
+                    when 0<i<90
+                        spin = -1
+                        v = [0, -1]
+                    when 90<=i<180
+                        spin = 1
+                        v = [0,1]
+                    when 180<i<270
+                        spin = -1
+                        v = [0,1]
+                    when 270<i<360
+                        spin = 1
+                        v = [0, -1]
+                p1 = [mc[i  ][0], mc[i  ][1]]
+                p2 = [mc[i+1][0], mc[i+1][1]]
+                n = p2n dif p2, p1
+                n = [n[1],-n[0]]
+                t = add p1, mul n, 100
+                line t, p1
+                s.draw [cx, cy], v, t, spin
+
+        # Voronoi
+        if s.Voronoi
+            vr = new Voronoi
+            bb = xl: 0, yt: 0, xr: w, yb:h
+            ps = mc.map (p)->x:p[0], y:p[1]
+            dr = vr.compute ps, bb
+            for e in dr.edges
+                line [e.va.x, e.va.y], [e.vb.x, e.vb.y], "rgba(0,0,0,0.25)"
+
+        # Delaunay
+        if s.Delaunay
+            dl = new Delaunator.from mc
+            for e in [0...dl.triangles.length] by 3
+                i1 = dl.triangles[e+0]
+                i2 = dl.triangles[e+1]
+                i3 = dl.triangles[e+2]
+                p1 = [mc[i1][0], mc[i1][1]]
+                p2 = [mc[i2][0], mc[i2][1]]
+                p3 = [mc[i3][0], mc[i3][1]]
+                line p1, p2, "rgba(0,0,0,0.25)"
+                line p2, p3, "rgba(0,0,0,0.25)"
+                line p3, p1, "rgba(0,0,0,0.25)"
+
     redraw()
 
     g = new dat.GUI();
     
     f = g.addFolder "Curls"
+    f.add(s, "Voronoi").onChange redraw
+    f.add(s, "Delaunay").onChange redraw
+    f.add(s, "Spirals").onChange redraw
     f.add(s, "spiral_step",10,   90, 10).onChange redraw
     f.add(s, "radius"   ,   0, 1000).onChange redraw
     f.add(s, "steps"    ,   0, 1000).onChange redraw
@@ -174,6 +206,7 @@ init = ->
     f.open()
 
     f = g.addFolder "Wings"
+    f.add(b, "wings_details", 1, 10, 1).onChange redraw
     for i in [0...b.w_n]
         f.add(b, "w_r_#{i}", -10, 10).onChange redraw
     for i in [0...b.w_n]
